@@ -1,0 +1,12 @@
+server:
+  host: 0.0.0.0
+  port: 8080
+
+instances:
+  - id: website
+    provider: oracle-oci
+    allowed_origins:
+      - https://mywebsite.com
+    provider_config:
+      type: file
+      path: ./instances/website.yaml

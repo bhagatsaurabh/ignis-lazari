@@ -1,7 +1,9 @@
-[package]
-name = "ignis-lazari"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-ferris-says = "0.3.2"
+[workspace]
+members = [
+  "bin/activator",
+  "crates/activator-core",
+  "crates/plugin-api",
+  "crates/config",
+  "crates/mock-provider",
+]
+resolver = "2"
