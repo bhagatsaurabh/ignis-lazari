@@ -15,13 +15,13 @@ pub struct ServerConfig {
 #[derive(Debug, Deserialize)]
 pub struct InstanceConfig {
     pub id: String,
-
     pub provider: String,
 
     #[serde(default)]
     pub allowed_origins: Vec<String>,
 
-    pub provider_config: ProviderConfigRef,
+    #[serde(default)]
+    pub provider_config: Option<ProviderConfigRef>,
 }
 
 #[derive(Debug, Deserialize)]

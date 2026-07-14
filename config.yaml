@@ -4,9 +4,9 @@ server:
 
 instances:
   - id: website
-    provider: oracle-oci
+    provider: mock
     allowed_origins:
       - https://mywebsite.com
-    provider_config:
-      type: file
-      path: ./instances/website.yaml
+    # provider_config:
+    #   type: file
+    #   path: ./instances/website.yaml
