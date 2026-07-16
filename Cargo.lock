@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "activator"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "activator-core",
  "axum",
@@ -19,7 +19,7 @@ dependencies = [
 
 [[package]]
 name = "activator-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "axum",
  "config",
@@ -136,7 +136,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "config"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "serde_norway",
@@ -361,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "mock-provider"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "plugin-api",
@@ -378,7 +378,7 @@ dependencies = [
 
 [[package]]
 name = "oci-provider"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "plugin-api",
@@ -410,7 +410,7 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "plugin-api"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "serde",
@@ -428,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "process-exec"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "serde_json",
