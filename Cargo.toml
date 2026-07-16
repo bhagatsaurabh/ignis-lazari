@@ -9,3 +9,10 @@ members = [
   "crates/oci-provider",
 ]
 resolver = "2"
+
+[workspace.metadata.release]
+publish = false
+push = true
+tag = true
+tag-name = "v{{version}}"
+tag-message = "Release {{version}}"
