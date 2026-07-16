@@ -12,7 +12,7 @@ resolver = "2"
 
 [workspace.metadata.release]
 publish = false
-push = true
+push = false
 tag = true
 tag-name = "v{{version}}"
 tag-message = "Release {{version}}"
