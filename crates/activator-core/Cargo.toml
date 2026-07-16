@@ -1,0 +1,23 @@
+[package]
+name = "activator-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+plugin-api = { path = "../plugin-api" }
+config = { path = "../config" }
+mock-provider = { path = "../mock-provider" }
+oci-provider = { path = "../oci-provider" }
+thiserror = "2"
+axum = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = [
+  "net",
+  "rt-multi-thread",
+  "macros",
+  "signal",
+] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower-http = { version = "0.5", features = ["trace"] }
