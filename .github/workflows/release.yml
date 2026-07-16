@@ -15,7 +15,7 @@ on:
       - "example/**"
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
