@@ -5,5 +5,7 @@ members = [
   "crates/plugin-api",
   "crates/config",
   "crates/mock-provider",
+  "crates/process-exec",
+  "crates/oci-provider",
 ]
 resolver = "2"
