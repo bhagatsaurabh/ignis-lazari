@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
     paths-ignore:
       - "**/*.md"
       - "LICENSE"
@@ -11,7 +13,6 @@ on:
       - ".github/workflows/pull_request.yml"
       - "scripts/install.sh"
       - "example/**"
-    tags: ["v*"]
 
 permissions:
   contents: read
@@ -23,52 +24,107 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            runner: ubuntu-latest
+
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-    runs-on: ${{ matrix.os }}
+            runner: ubuntu-24.04-arm
+
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
+
     steps:
       - uses: actions/checkout@v7
+
       - uses: dtolnay/rust-toolchain@master
         with:
-          targets: ${{ matrix.target }}
           toolchain: 1.97.0
-      - name: install cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-      - name: build
-        run: cross build --release -p activator --target ${{ matrix.target }}
-      - name: package
+          targets: ${{ matrix.target }}
+
+      - name: Install musl tools
+        if: endsWith(matrix.target, '-musl')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Build
+        run: cargo build --release -p activator --target ${{ matrix.target }}
+
+      - name: Package
         run: |
           mkdir -p dist
           tar -czf dist/activator-${{ matrix.target }}.tar.gz \
             -C target/${{ matrix.target }}/release activator
-      - uses: softprops/action-gh-release@v3.0.2
+
+      - uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: dist/*.tar.gz
 
   docker:
-    needs: build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
+
     steps:
       - uses: actions/checkout@v7
-      - uses: docker/setup-qemu-action@v4.2.0
-      - uses: docker/setup-buildx-action@v4.2.0
-      - uses: docker/login-action@v4.4.0
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/metadata-action@v6.2.0
+
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          platforms: ${{ matrix.platform }}
+          tags: ghcr.io/${{ github.repository }}:${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  docker-manifest:
+    needs: docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v6
         id: meta
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
-      - uses: docker/build-push-action@v7.3.0
-        with:
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create multi-arch manifest
+        run: |
+          for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n'); do
+            docker buildx imagetools create \
+              -t "$tag" \
+              ghcr.io/${{ github.repository }}:amd64 \
+              ghcr.io/${{ github.repository }}:arm64
+          done
