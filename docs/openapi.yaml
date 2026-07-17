@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: Ignis Lazari API
+  description: >
+    HTTP API for checking and triggering wake-up of on-demand VMs managed by
+    Ignis Lazari;
+    each instance enforces its own CORS/Origin allow-list configured in
+    config.yaml.
+  version: "1.0"
+  license:
+    name: Unlicense
+    url: https://unlicense.org
+
+servers:
+  - url: http://localhost:8080
+    description: Local / self-hosted instance (replace host with your deployment)
+
+tags:
+  - name: instances
+    description: Operations on managed VM instances
+
+paths:
+  /v1/instances/{id}/status:
+    get:
+      tags: [instances]
+      summary: Get current instance state
+      description: >
+        Queries the configured provider live (no caching) and returns the
+        current lifecycle state of the instance.
+      operationId: getInstanceStatus
+      parameters:
+        - $ref: "#/components/parameters/InstanceId"
+      responses:
+        "200":
+          description: Current instance state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceStatusResponse"
+              examples:
+                running:
+                  value:
+                    id: website
+                    state: running
+        "403":
+          $ref: "#/components/responses/OriginForbidden"
+        "404":
+          $ref: "#/components/responses/InstanceNotFound"
+        "502":
+          $ref: "#/components/responses/ProviderError"
+
+  /v1/instances/{id}/start:
+    post:
+      tags: [instances]
+      summary: Trigger instance start
+      description: >
+        Requests that the provider start the instance. Returns immediately
+        with a `starting` state; the caller should poll the status endpoint
+        to detect when the instance reaches `running`. This call is
+        idempotent from the client's perspective — calling it while the
+        instance is already starting or running is safe and simply confirms
+        current state via the provider.
+      operationId: startInstance
+      parameters:
+        - $ref: "#/components/parameters/InstanceId"
+      responses:
+        "200":
+          description: Start triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceStatusResponse"
+              examples:
+                starting:
+                  value:
+                    id: website
+                    state: starting
+        "403":
+          $ref: "#/components/responses/OriginForbidden"
+        "404":
+          $ref: "#/components/responses/InstanceNotFound"
+        "502":
+          $ref: "#/components/responses/ProviderError"
+
+components:
+  parameters:
+    InstanceId:
+      name: id
+      in: path
+      required: true
+      description: Instance identifier as defined in config.yaml (`instances[].id`)
+      schema:
+        type: string
+      example: website
+
+  schemas:
+    InstanceState:
+      type: string
+      description: Lifecycle state of the managed instance.
+      enum:
+        - stopped
+        - starting
+        - running
+        - stopping
+        - unknown
+
+    InstanceStatusResponse:
+      type: object
+      required: [id, state]
+      properties:
+        id:
+          type: string
+          example: website
+        state:
+          $ref: "#/components/schemas/InstanceState"
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message.
+
+  responses:
+    InstanceNotFound:
+      description: No instance with the given id is configured.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "instance 'unknown-id' not found"
+
+    OriginForbidden:
+      description: >
+        Request included an Origin header not present in this instance's
+        allowed_origins list.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "origin not allowed"
+
+    ProviderError:
+      description: The underlying provider CLI call failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "oci CLI exited with status 1: ..."
