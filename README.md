@@ -167,13 +167,13 @@ instances:
       path: instances/website.yaml
 ```
 
-| Field                              | Description                                                                                       |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `server.host` / `server.port`      | Address the HTTP API binds to.                                                                    |
-| `instances[].id`                   | Unique identifier, used in API URLs (`/v1/instances/<id>/...`).                                   |
-| `instances[].provider`             | Which provider handles this instance.                                                             |
-| `instances[].allowed_origins`      | Browser origins permitted to call this instance's endpoints (see [CORS](#cors--origin-handling)). |
-| `instances[].provider_config.path` | Path to the provider-specific config file, resolved relative to the config directory.             |
+| Field                              | Description                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------- |
+| `server.host` / `server.port`      | Address the HTTP API binds to.                                                        |
+| `instances[].id`                   | Unique identifier, used in API URLs (`/v1/instances/<id>/...`).                       |
+| `instances[].provider`             | Which provider handles this instance.                                                 |
+| `instances[].allowed_origins`      | Browser origins permitted to call this instance's endpoints.                          |
+| `instances[].provider_config.path` | Path to the provider-specific config file, resolved relative to the config directory. |
 
 ### Per-Instance Provider Config
 
@@ -210,6 +210,7 @@ Verify the CLI works standalone before pointing Ignis Lazari at it:
 ```bash
 oci compute instance get --instance-id <your-instance-ocid>
 ```
+
 ## Contributing
 
 Contributions and provider implementations are always welcome!
