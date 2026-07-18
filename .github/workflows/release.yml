@@ -4,16 +4,21 @@ on:
   push:
     branches:
       - main
-    tags:
-      - "v*"
     paths-ignore:
       - "**/*.md"
       - "LICENSE"
       - "docs/**"
       - ".github/workflows/pull_request.yml"
-      - ".github/workflows/publish.yml"
       - "scripts/install.sh"
       - "example/**"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Bump type"
+        required: true
+        default: patch
+        type: choice
+        options: [patch, minor, major]
 
 permissions:
   contents: write
@@ -26,13 +31,10 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
-
           - target: x86_64-unknown-linux-musl
             runner: ubuntu-latest
-
           - target: aarch64-unknown-linux-gnu
             runner: ubuntu-24.04-arm
-
           - target: aarch64-unknown-linux-musl
             runner: ubuntu-24.04-arm
 
@@ -61,18 +63,80 @@ jobs:
           tar -czf dist/igl-activator-${{ matrix.target }}.tar.gz \
             -C target/${{ matrix.target }}/release igl-activator
 
-      - uses: softprops/action-gh-release@v3
-        if: startsWith(github.ref, 'refs/tags/')
+      - uses: actions/upload-artifact@v7.0.1
         with:
+          name: dist-${{ matrix.target }}
+          path: dist/*.tar.gz
+      # - uses: softprops/action-gh-release@v3
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   with:
+      #     files: dist/*.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.get_tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.97.0
+
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo binstall cargo-release --no-confirm
+
+      - name: Configure git identity
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Determine bump type
+        id: bump
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ inputs.bump }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Cut release
+        run: cargo release ${{ steps.bump.outputs.type }} --execute --no-confirm
+
+      - name: Get resulting tag
+        id: get_tag
+        run: echo "tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - uses: actions/download-artifact@v8.0.1
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v3.0.2
+        with:
+          tag_name: ${{ needs.release.outputs.tag }}
           files: dist/*.tar.gz
 
   docker:
+    needs: release
     strategy:
       matrix:
         include:
           - platform: linux/amd64
             runner: ubuntu-latest
-
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
 
@@ -80,6 +144,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.tag }}
 
       - uses: docker/setup-buildx-action@v4
 
@@ -103,7 +169,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   docker-manifest:
-    needs: docker
+    needs: [release, docker]
     runs-on: ubuntu-latest
 
     steps:
@@ -118,8 +184,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=tag
+            type=raw,value=latest
+            type=raw,value=${{ needs.release.outputs.tag }}
 
       - name: Create multi-arch manifest
         run: |
