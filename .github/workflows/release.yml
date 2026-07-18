@@ -57,8 +57,8 @@ jobs:
       - name: Package
         run: |
           mkdir -p dist
-          tar -czf dist/activator-${{ matrix.target }}.tar.gz \
-            -C target/${{ matrix.target }}/release activator
+          tar -czf dist/igl-activator-${{ matrix.target }}.tar.gz \
+            -C target/${{ matrix.target }}/release igl-activator
 
       - uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')

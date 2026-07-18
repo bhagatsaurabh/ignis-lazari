@@ -15,7 +15,7 @@ RUN case "$TARGETARCH" in \
   && apt-get install -y --no-install-recommends musl-tools \
   && rm -rf /var/lib/apt/lists/* \
   && cargo build --release -p activator --target "$RUST_TARGET" \
-  && cp "target/$RUST_TARGET/release/activator" /activator
+  && cp "target/$RUST_TARGET/release/igl-activator" /activator
 
 FROM alpine:3.23.5
 
