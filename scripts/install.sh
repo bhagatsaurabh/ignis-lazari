@@ -46,7 +46,6 @@ tar -xzf "$TMP_DIR/igl-activator.tar.gz" -C "$TMP_DIR"
 echo "==> Installing to $INSTALL_DIR"
 id -u igl-activator >/dev/null 2>&1 || useradd --system --home "$INSTALL_DIR" --shell /usr/sbin/nologin igl-activator
 
-mkdir -p "$INSTALL_DIR/config/instances" "$INSTALL_DIR/.oci"
 install -m 755 "$TMP_DIR/igl-activator" "$BIN_PATH"
 
 if [ ! -f "$INSTALL_DIR/config/config.yaml" ]; then
@@ -75,7 +74,6 @@ User=igl-activator
 Group=igl-activator
 WorkingDirectory=$INSTALL_DIR
 Environment=ACTIVATOR_CONFIG_DIR=$INSTALL_DIR/config
-Environment=OCI_CONFIG_FILE=$INSTALL_DIR/.oci/config
 Environment=RUST_LOG=info
 ExecStart=$BIN_PATH
 Restart=on-failure
@@ -99,6 +97,6 @@ echo "==> Installed. Before starting:"
 echo "    1. Edit $INSTALL_DIR/config/config.yaml and add your instance(s)"
 echo "    2. Add per-instance provider configs under $INSTALL_DIR/config/instances/"
 echo "    3. Configure and authenticate provider CLIs (for e.g. Azure CLI if using Azure instances in previous step)"
-echo "    Then run: sudo systemctl start activator"
+echo "    Then run: sudo systemctl start igl-activator"
 echo "    Check status with: sudo systemctl status igl-activator"
 echo "    Follow logs with: journalctl -u igl-activator -f"
