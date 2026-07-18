@@ -2,11 +2,11 @@
 
 Ever wonder how much money you're burning on a VM that's idle 23 hours a day?
 
-Most hobby or personal projects get a handful of visitors — but if you're using VMs behind them running 24/7, then its billed at full price whether anyone shows up or not. With Ignis Lazari your "heavy" VM stays _off_ by default, and wakes up on demand the moment someone actually visits your site.
+Most hobby or personal projects get a handful of visitors — but if you're using instances behind them running 24/7, then its billed at full price whether anyone shows up or not. With Ignis Lazari your "heavy" VM stays _off_ by default, and wakes up on demand the moment someone actually visits your site.
 
 > You only pay for compute when compute is doing something.
 
-It's a lightweight, provider-agnostic "activator" service — a tiny always-on process (perfectly suitable for a nano/micro VM instance) that starts your real infrastructure on request. Ofcourse, this comes at a cost of slightly reduced first visit experience after your VM is stopped.
+It's a lightweight, provider-agnostic "activator" service — a tiny always-on process (perfectly suitable for a nano/micro instance) that starts your real infrastructure on request. Ofcourse, this comes at a cost of slightly reduced first visit experience after your VM is stopped.
 
 > **"Ignis Lazari"?** — the spark/fire that raises "something" from the dead :)
 
@@ -16,7 +16,7 @@ Personal projects rarely have real traffic (a game server, a self-hosted app, a 
 
 Ignis Lazari is a small always-on process that sits in front of your heavier VM(s). It runs on the cheapest possible instance (or as a tiny container) and exposes a public HTTP API that your hobby site's frontend can call to:
 
-1. Check whether the real VM is currently running.
+1. Check whether the real instance is currently running.
 2. Trigger a start & wait if it's off.
 
 ## How It Works

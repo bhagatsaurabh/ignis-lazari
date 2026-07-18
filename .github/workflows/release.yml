@@ -11,6 +11,7 @@ on:
       - "LICENSE"
       - "docs/**"
       - ".github/workflows/pull_request.yml"
+      - ".github/workflows/publish.yml"
       - "scripts/install.sh"
       - "example/**"
 
