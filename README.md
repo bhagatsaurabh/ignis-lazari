@@ -2,17 +2,17 @@
 
 Ever wonder how much money you're burning on a VM that's idle 23 hours a day?
 
-Most hobby or personal projects get a handful of visitors — but if you're using instances behind them running 24/7, then its billed at full price whether anyone shows up or not. With Ignis Lazari your "heavy" VM stays _off_ by default, and wakes up on demand the moment someone actually visits your site.
+For Most hobby or personal projects traffic is sporadic at best, but if you're using instances behind them running 24/7, then its billed at full price whether anyone shows up or not. With Ignis Lazari your "heavy" VM stays _off_ by default, and wakes up on demand the moment someone actually visits your site.
 
 > You only pay for compute when compute is doing something.
 
-It's a lightweight, provider-agnostic "activator" service — a tiny always-on process (perfectly suitable for a nano/micro instance) that starts your real infrastructure on request. Ofcourse, this comes at a cost of slightly reduced first visit experience after your VM is stopped.
+A lightweight, provider-agnostic activator: tiny service designed to run continuously on an inexpensive nano or micro instance, starting your real infrastructure only when it's needed. The trade-off is a slightly slower first visit whenever the VM has been stopped.
 
-> **"Ignis Lazari"?** — the spark/fire that raises "something" from the dead :)
+> **"Ignis Lazari"?** The spark/fire that raises "something" from the dead :)
 
 ## Why
 
-Personal projects rarely have real traffic (a game server, a self-hosted app, a demo environment). Most cloud providers don't offer true "scale to zero" for full VMs the way they do for serverless functions — so the VM either runs all the time, or you manually start/stop it, which defeats the purpose of having a public project.
+Wwhether it's a self-hosted app, a game-server or a demo environment, personal projects typically see very little traffic. Yet unlike serverless platforms, most cloud providers can't truly scale VMs to zero. Your options are to leave the VM running around the clock or manually start and stop it, making public deployments like these unnecessarily expensive or inconvenient.
 
 Ignis Lazari is a small always-on process that sits in front of your heavier VM(s). It runs on the cheapest possible instance (or as a tiny container) and exposes a public HTTP API that your hobby site's frontend can call to:
 
@@ -23,13 +23,13 @@ Ignis Lazari is a small always-on process that sits in front of your heavier VM(
 
 Every provider integration shells out to that provider's own official CLI tool, using whatever authentication method the CLI is already configured with on the host (API signing keys, instance principal, etc.). This keeps the core binary free of provider-specific auth/signing code and makes adding new providers a matter of wrapping a CLI, not implementing a new SDK integration from scratch.
 
-- **Origin-restricted public API:** Since the API is designed to be called directly from browser, each instance has its own CORS allow-list — no blanket "allow all" and no heavyweight auth system, appropriate for demo-scale projects.
+- **Origin-restricted public API:** The API is built for direct browser access, so each instance defines its own CORS allow-list instead of relying on a blanket "allow all" policy. It also avoids a heavyweight authentication system, striking a balance that's well suited to demo-scale deployments.
 
 - **Per-instance configuration:** Each managed VM has its own provider, credentials location, and allowed browser origins.
 
 - **Deployment:** Run as a single static binary via a one-line installer (systemd), or as a container image you extend with your provider's CLI.
 
-- **Small footprint.** Written in Rust, ships as a static binary — designed to comfortably run on the smallest/cheapest VM tier a provider offers.
+- **Small footprint.** Built in Rust and distributed as a single static binary, it's lightweight enough to run comfortably on even the smallest/cheapest VM tier offered by most cloud providers.
 
 ## Project Reference
 
@@ -44,7 +44,7 @@ The project is a Cargo workspace split into focused crates:
 | `crates/process-exec`   | Generic async subprocess runner (spawn, timeout, JSON output parsing) shared by all CLI-based providers. |
 | `crates/mock-provider`  | A fake provider for local testing without touching real infrastructure.                                  |
 
-Adding a new cloud provider means adding a new crate that implements `Provider` and `ProviderFactory` — nothing in `activator-core` needs to change. See [Adding a New Provider](#adding-a-new-provider).
+Supporting a new cloud provider is as simple as adding a crate that implements `Provider` and `ProviderFactory`; `activator-core` itself remains unchanged. See [Adding a New Provider](#adding-a-new-provider).
 
 ## Quick Start
 
@@ -106,7 +106,7 @@ journalctl -u igl-activator -f
 
 ### Container Image
 
-The published image is a minimal base — it contains the `activator` binary and nothing provider-specific. You extend it with whatever CLI your chosen provider needs.
+The published image is intentionally minimal, containing only the `activator` binary and no provider-specific tooling. Simply extend it with the CLI required for your chosen cloud provider.
 
 ```dockerfile
 FROM ghcr.io/bhagatsaurabh/ignis-lazari:latest
@@ -191,7 +191,7 @@ profile: DEFAULT # OCI CLI profile name, defaults to the CLI's own default
 cli_binary: oci # override if the CLI isn't named/located as "oci" on PATH
 ```
 
-No credentials are stored in this file — authentication is entirely delegated to however the provider's CLI is already configured on the host (see [Supported Providers](#supported-providers)).
+No credentials are stored in this configuration file. Authentication is delegated to the cloud provider's CLI and uses the credentials already configured on the host. (see [Supported Providers](#supported-providers)).
 
 ## API Reference
 
@@ -203,7 +203,7 @@ No credentials are stored in this file — authentication is entirely delegated 
 
 Install and authenticate the CLI on the host running Ignis Lazari (or in your extended container image) _before_ starting the service.
 
-Recommended auth method for a 24/7 unattended service: **API signing key** (`oci setup config`), since it doesn't expire the way session-token auth does. Instance principal auth is also a good option if Ignis Lazari itself runs on an OCI instance with the appropriate dynamic group/policy — it requires no key management at all.
+For an unattended 24/7 deployment, the recommended auth method is an **API signing key** (for e.g. `oci setup config` for Oracle Cloud), as it doesn't expire like session-token auth. If Ignis Lazari is running on an OCI instance, `Instance Principals` are also an excellent choice, requiring only the appropriate dynamic group and IAM policy, no key management needed.
 
 Verify the CLI works standalone before pointing Ignis Lazari at it:
 
@@ -224,7 +224,7 @@ Contributions and provider implementations are always welcome!
 5. Register your factory in `crates/activator-core/src/bootstrapper.rs`'s `build_factory_registry`.
 6. Add your crate as a workspace member and as a dependency of `activator-core`.
 
-No provider is required to use a CLI — `Provider` is just an async trait. If a provider ever has a mature Rust SDK you'd rather use directly, implement it the same way, just skip `process-exec` entirely.
+Providers aren't required to use a CLI, `Provider` is simply an async trait. If a cloud provider offers a mature Rust SDK, you can implement it directly and bypass `process-exec` altogether.
 
 ### Building From Source
 
