@@ -56,7 +56,7 @@ server:
 
 instances: []
 EOF
-  echo "==> Wrote a starter config at $INSTALL_DIR/config/config.yaml — edit this before starting the service."
+  echo "==> Wrote a starter config at $INSTALL_DIR/config/config.yaml"
 fi
 
 chown -R igl-activator:igl-activator "$INSTALL_DIR"
